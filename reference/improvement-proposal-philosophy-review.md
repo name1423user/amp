@@ -380,6 +380,7 @@ AND/OR/NOT/IF/ELSE/UNLESS/XOR等の論理演算子一式、conditionやclauseの
 以前の問いは「AMPに何を追加するべきか」だった。本提案書とそれに対するレビューを経て、問いは「AMPは、今の構造をどこまで削っても価値を維持できるのか」に変わっている。したがって次の一手は仕様変更ではなく、削除実験の設計である。優先順位は以下の通りで、**1番の結果次第で2〜3番の優先順位・要否そのものが変わりうる**。
 
 1. **【最優先】Full AMP vs Minimal AMP vs NL**(巻末「補記」に詳細設計): 今回の提案書全体の中核仮説——「AMPの価値は本当にentity参照(refs)なのか」——を直接検証する。entity参照の優位性が「AMPプロトコル全体」に由来するのか、「refs相当の最小構造」だけで再現するのかを、自己申告ではなく**正答率**で切り分ける。ここが最初に来るべき理由は単純で、この結果によって2番以降の実験の意味そのものが変わる(AMPを縮小する方向なら、condition/urgency等を最小AMPにどう載せるかという設計になり、現行AMPを維持する方向なら、これまで通りフル構造への追加検討になる)
+   - **初回実施済み**([experiment-h-full-vs-minimal-vs-nl.md](experiment-h-full-vs-minimal-vs-nl.md)): ブラインドテスト4シナリオ(うち本物の参照競合を作れたのは実験G型の1シナリオのみ)で、Full AMPとMinimal AMPが完全に同一の結果(正解・高confidence・曖昧性なし)となった——「entity参照の優位性はrefs相当の最小構造だけで再現する」という方向を支持する予備的結果。ただしサンプル数不足(genuine ambiguity条件でn=1)、かつ「行為タイプの伝達」という別軸が未検証のため、決着はまだ付いていない。次の一手は同型シナリオの複製によるn数拡大と、行為タイプ伝達を独立に測る設計
 2. **condition**: `until`/`after`/`if`それぞれ3〜5シナリオずつ用意し(例: until=`"Don't send the report until Alex approves it."`、after=`"Send the report after Alex finishes reviewing it."`、if=`"Send the report if Alex approves it."`)、NL / AMP(condition無し) / AMP(condition有り) の3群を比較する。**「AIがそう申告したか」ではなく、実際の正答率・誤った行動率を測る**(§9-6の指標分離を、conditionの追試に具体的に適用したもの)。3種類とも同水準の効果で再現されればADR-026候補として正式化、`if`だけ乖離すれば分類自体を見直す(experiment-eの続き)
 3. **urgency**: `Send this right now.`/`Send this when you have time.`/`Send this today.`/`Send this eventually.`のような具体例を用意し、まず「AMP変換によって緊急度の伝達がどれだけ劣化するか」を測定してから、`urgency: "immediate"|"normal"|"low"`のような最小構造を検討する。構造を先に設計しない
 4. **time role**: 「事象時刻 vs メッセージ送信時刻」の区別だけを先に決める。例: `"The report was uploaded at 10:00."`(event_time)と`"This message was sent at 10:00."`(message_time)を混同なく区別できるかだけを見る、time role全体からではなく最小の切り口から(gap-analysisの提言どおり)
@@ -437,6 +438,8 @@ AND/OR/NOT/IF/ELSE/UNLESS/XOR等の論理演算子一式、conditionやclauseの
 なお、Minimal AMPの中でも「自然言語の文中にentity参照だけを埋め込む」(`Send [entity:report.pdf] to [entity:alex].`)、「自然言語本文はそのままに参照メタデータだけ付記する」など複数の実現形が考えられる。まずはB/Cの2群比較で「フル構造 vs 最小構造」の大枠を確定し、Cが有効だった場合にその内部でどの実現形が最も軽量かを次の段階で比較すればよい。
 
 この場合、AMPは会話全体をJSON化するプロトコルではなく、自然言語の会話の中で「どのfileか」「どのagentか」が曖昧になりうる箇所にだけ埋め込む注釈(条件Cのような最小メッセージ)として運用する、という狭いスコープの再定義が次の検討対象になり得る。これも「追加しない」と同じ精神で、遠慮なく次の検討候補として記録する。
+
+**実施状況**: 上記設計に基づく初回実験を実施済み([experiment-h-full-vs-minimal-vs-nl.md](experiment-h-full-vs-minimal-vs-nl.md))。素朴な競合設計(3シナリオ)は自然言語側が答えを明言してしまい失敗(実験G「試行1」と同型の罠)、実験Gで実証済みの競合パターンを流用した1シナリオでは、自然言語が判定を拒否する一方でFull AMP・Minimal AMPは完全に同一の結果(正解・高confidence)となった。方向としては「entity参照の優位性はrefsだけで再現する」を支持するが、n数(genuine ambiguity条件でn=1)と「行為タイプの伝達」という未検証軸が残っており、最終結論には至っていない。
 
 ### 優先順位の全体像
 
