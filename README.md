@@ -1,11 +1,11 @@
 # amp
 
-AI間メッセージプロトコル v0.1 — 構造化JSON(意図・役割・指示対象)を英文1行に変換する。監査ログ用途。
+AI間メッセージプロトコル — 構造化JSON(意図・役割・指示対象)を英文1行に変換する。監査ログ用途。
 
 ## 動く例
 
 ```bash
-pip install -e .
+pip install amp-protocol
 amp render --catalog examples/catalog.json examples/messages.jsonl
 ```
 
@@ -23,11 +23,60 @@ cat examples/messages.jsonl | amp render --catalog examples/catalog.json -
 amp render --catalog examples/catalog.json --skip-errors messages.jsonl
 ```
 
+## 対応している act
+
+ADR-011 の7語彙を全て実装している。
+
+| act | 例文 |
+|---|---|
+| `inform` | `AI-B sends 3 files to AI-A.` |
+| `request` | `AI-A requests AI-B to send 3 files to AI-A.` |
+| `query` | `Does AI-B send 3 files to AI-A?` (`gap`で疑問詞疑問文も: `Who sends 3 files to AI-A?`) |
+| `commit` | `AI-B will send 3 files to AI-A.` |
+| `reject` | `AI-B refuses to send 3 files to AI-A.` |
+| `failure` | `AI-B failed to send 3 files to AI-A.` |
+| `close` | `AI-A ends the conversation.` |
+
+`attitude`(確信度・情報源・必然性)も付けられる:
+
+```json
+"attitude": { "confidence": 0.9, "evidence": "inferred", "necessity": "should" }
+```
+→ `"Apparently, AI-B almost certainly should send 3 files to AI-A."`
+
+`patient` は埋め込み節にもできる(深さ1まで):
+
+```json
+"patient": { "clause": { "predicate": {...}, "roles": {...} } }
+```
+→ `"MAGI recommends that Claude adopt amp."`
+
+`inform`/`commit`は進行形・完了形も使える:
+
+```json
+"predicate": { "lemma": "send", "tense": "present", "aspect": "perfect" }
+```
+→ `"AI-B has sent a.json."`
+
+role に `props`(スケールなし属性)・`measurements`(スケールあり属性、型ごとの閾値で形容詞化)も付けられる(単一ref限定):
+
+```json
+"patient": { "refs": ["entity:file.a"], "props": ["prop:encrypted"],
+             "measurements": { "prop:size": { "value": 4.2, "unit": "unit:gigabyte" } } }
+```
+→ `"...an encrypted 4.2 GB file..."`
+
 ## 仕様
 
 - 実装対象の確定仕様: [`spec/01-v0.1仕様.md`](spec/01-v0.1仕様.md)
-- v0.1 でやらないこと(handshakeなど)とその理由: 引き継ぎ資料の `00-判断書.md` 参照
+- 判断とその理由(handshakeを実装しない理由など): [`amp-handoff/amp-handoff/00-判断書.md`](../amp-handoff/amp-handoff/00-判断書.md)
+- act拡張の経緯: [`reference/act-expansion.md`](reference/act-expansion.md)
+- MAGIでの実利用と、そこで見つかった過不足: [`reference/m6-magi-findings.md`](reference/m6-magi-findings.md)
 - 正解の定義は仕様書ではなく [`tests/golden.jsonl`](tests/golden.jsonl)。仕様と食い違ったらテストが正
+
+## 意図的に実装していないもの
+
+独立に書かれた第二の実装が現れる(または具体的な接続予定が立つ)まで、handshake・語彙衝突解決・3者以上の会話は実装しない。理由は判断書を参照。単一実装の段階ではテストしようがないコードを増やすだけになるため。
 
 ## 開発
 
@@ -36,3 +85,5 @@ pip install -e ".[dev]"
 pytest
 python tests/inflection_probe.py  # M0: 屈折ライブラリの疎通確認
 ```
+
+CI は push/PR ごとに GitHub Actions で `pytest` を実行する([`.github/workflows/test.yml`](.github/workflows/test.yml))。

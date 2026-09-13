@@ -13,6 +13,14 @@ def verb_past(lemma: str) -> str:
     return getInflection(lemma, tag="VBD")[0]
 
 
+def verb_gerund(lemma: str) -> str:
+    return getInflection(lemma, tag="VBG")[0]
+
+
+def verb_past_participle(lemma: str) -> str:
+    return getInflection(lemma, tag="VBN")[0]
+
+
 def plural(word: str) -> str:
     return _engine.plural(word)
 

@@ -16,6 +16,43 @@
       }
     },
     {
+      "id": "type:file.text",
+      "kind": "type",
+      "parent": "type:file",
+      "generic_label": {
+        "en": "file"
+      },
+      "thresholds": {
+        "prop:size": [
+          { "below": { "value": 1, "unit": "unit:megabyte" }, "label": { "en": "small" } },
+          { "above": { "value": 100, "unit": "unit:megabyte" }, "label": { "en": "large" } }
+        ]
+      }
+    },
+    {
+      "id": "prop:encrypted",
+      "kind": "property",
+      "scaled": false,
+      "label": { "en": "encrypted" }
+    },
+    {
+      "id": "prop:size",
+      "kind": "property",
+      "scaled": true
+    },
+    {
+      "id": "unit:megabyte",
+      "kind": "unit",
+      "quantity": "prop:size",
+      "label": { "en": "MB" }
+    },
+    {
+      "id": "unit:gigabyte",
+      "kind": "unit",
+      "quantity": "prop:size",
+      "label": { "en": "GB" }
+    },
+    {
       "id": "type:index",
       "kind": "type",
       "generic_label": {
@@ -107,6 +144,11 @@
       "id": "entity:tmp.2",
       "kind": "individual",
       "type": "type:file"
+    },
+    {
+      "id": "entity:tmp.4",
+      "kind": "individual",
+      "type": "type:file.text"
     },
     {
       "id": "entity:tmp.3",

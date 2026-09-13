@@ -13,6 +13,14 @@ def verb_past(lemma: str) -> str:
     return getInflection(lemma, tag="VBD")[0]
 
 
+def verb_gerund(lemma: str) -> str:
+    return getInflection(lemma, tag="VBG")[0]
+
+
+def verb_past_participle(lemma: str) -> str:
+    return getInflection(lemma, tag="VBN")[0]
+
+
 def noun_plural(word: str) -> str:
     return p.plural(word)
 
@@ -33,6 +41,11 @@ CASES = [
     ("URI article", lambda: with_article("URI"), "a URI"),
     ("user article", lambda: with_article("user"), "a user"),
     ("hour article", lambda: with_article("hour"), "an hour"),
+    # v0.2: aspect (progressive/perfect)
+    ("send gerund", lambda: verb_gerund("send"), "sending"),
+    ("send past participle", lambda: verb_past_participle("send"), "sent"),
+    ("recommend gerund", lambda: verb_gerund("recommend"), "recommending"),
+    ("recommend past participle", lambda: verb_past_participle("recommend"), "recommended"),
 ]
 
 

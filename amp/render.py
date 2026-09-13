@@ -31,7 +31,7 @@ from .errors import (
     UnsupportedProtocol,
     UnsupportedRole,
 )
-from .inflect_ import verb_past, verb_present_3sg
+from .inflect_ import verb_gerund, verb_past, verb_past_participle, verb_present_3sg
 
 KNOWN_ROLES = ("agent", "patient", "recipient")
 MAX_CLAUSE_DEPTH = 1
@@ -87,13 +87,45 @@ def _parse_attitude(message: dict, message_id: str) -> dict | None:
     return {"confidence": confidence, "evidence": evidence, "necessity": necessity}
 
 
+def _finite_be(tense: str, plural_subject: bool) -> str:
+    if tense == "past":
+        return "were" if plural_subject else "was"
+    return "are" if plural_subject else "is"
+
+
+def _finite_have(tense: str, plural_subject: bool) -> str:
+    if tense == "past":
+        return "had"
+    return "have" if plural_subject else "has"
+
+
 def _verb_phrase(
-    lemma: str, tense: str, polarity: str, plural_subject: bool, necessity: str | None, force_bare: bool = False
+    lemma: str, tense: str, polarity: str, plural_subject: bool, necessity: str | None,
+    aspect: str = "simple", force_bare: bool = False,
 ) -> str:
+    negation = "not " if polarity == "negative" else ""
+
+    # progressive/perfect always surface their auxiliary (unlike simple, where
+    # do-support only appears for negation) — so the bare (modal/mandative)
+    # form and the finite form share the same "aux [not] main-content" shape,
+    # just with a different aux.
+    if aspect == "progressive":
+        bare_content = f"be {verb_gerund(lemma)}"
+    elif aspect == "perfect":
+        bare_content = f"have {verb_past_participle(lemma)}"
+    else:
+        bare_content = lemma
+
     if necessity:
-        return f"{necessity} {'not ' if polarity == 'negative' else ''}{lemma}"
+        return f"{necessity} {negation}{bare_content}"
     if force_bare:
-        return f"{'not ' if polarity == 'negative' else ''}{lemma}"
+        return f"{negation}{bare_content}"
+
+    if aspect == "progressive":
+        return f"{_finite_be(tense, plural_subject)} {negation}{verb_gerund(lemma)}"
+    if aspect == "perfect":
+        return f"{_finite_have(tense, plural_subject)} {negation}{verb_past_participle(lemma)}"
+
     if tense == "present":
         if polarity == "negative":
             return f"{'do not' if plural_subject else 'does not'} {lemma}"
@@ -112,7 +144,9 @@ def _as_object(value, message_id: str, field_path: str) -> dict:
     return value
 
 
-def _validate_predicate(predicate: dict, message_id: str, field_path: str) -> tuple[str, str, str]:
+def _validate_predicate(
+    predicate: dict, message_id: str, field_path: str, allowed_aspects: tuple[str, ...] = ("simple",)
+) -> tuple[str, str, str, str]:
     lemma = predicate.get("lemma")
     if not lemma:
         raise MissingField(message_id, f"{field_path}.lemma", "lemma is required")
@@ -128,10 +162,10 @@ def _validate_predicate(predicate: dict, message_id: str, field_path: str) -> tu
         raise InvalidValue(message_id, f"{field_path}.polarity", f"got {polarity!r}")
 
     aspect = predicate.get("aspect", "simple")
-    if aspect != "simple":
+    if aspect not in allowed_aspects:
         raise UnsupportedAspect(message_id, f"{field_path}.aspect", f"got {aspect!r}")
 
-    return lemma, tense, polarity
+    return lemma, tense, polarity, aspect
 
 
 def _ref_phrase(role_value: dict | None, catalog: Catalog, message_id: str, field_path: str) -> str | None:
@@ -142,7 +176,10 @@ def _ref_phrase(role_value: dict | None, catalog: Catalog, message_id: str, fiel
     refs = role_value.get("refs")
     if not refs:
         return None
-    return nounphrase.build(refs, catalog, message_id, f"{field_path}.refs")
+    return nounphrase.build(
+        refs, catalog, message_id, f"{field_path}.refs",
+        props=role_value.get("props"), measurements=role_value.get("measurements"),
+    )
 
 
 def _content_parts(content, message_id: str, field_path: str) -> tuple[dict, dict]:
@@ -176,7 +213,10 @@ def _patient_phrase(
     refs = role_value.get("refs")
     if not refs:
         raise MissingField(message_id, f"{field_path}.refs", "refs (or clause) is required")
-    return nounphrase.build(refs, catalog, message_id, f"{field_path}.refs")
+    return nounphrase.build(
+        refs, catalog, message_id, f"{field_path}.refs",
+        props=role_value.get("props"), measurements=role_value.get("measurements"),
+    )
 
 
 def _render_content(
@@ -184,7 +224,9 @@ def _render_content(
     attitude: dict | None = None, force_bare_verb: bool = False,
 ) -> str:
     predicate, roles = _content_parts(content, message_id, field_path)
-    lemma, tense, polarity = _validate_predicate(predicate, message_id, f"{field_path}.predicate")
+    lemma, tense, polarity, aspect = _validate_predicate(
+        predicate, message_id, f"{field_path}.predicate", allowed_aspects=("simple", "progressive", "perfect")
+    )
     _check_known_roles(roles, message_id, f"{field_path}.roles")
 
     agent_value = _as_object(roles.get("agent"), message_id, f"{field_path}.roles.agent")
@@ -194,11 +236,15 @@ def _render_content(
     if not agent_refs:
         raise MissingField(message_id, f"{field_path}.roles.agent", "agent is required")
 
-    subject = nounphrase.build(agent_refs, catalog, message_id, f"{field_path}.roles.agent.refs")
+    subject = nounphrase.build(
+        agent_refs, catalog, message_id, f"{field_path}.roles.agent.refs",
+        props=agent_value.get("props"), measurements=agent_value.get("measurements"),
+    )
 
     necessity = attitude.get("necessity") if attitude else None
     verb = _verb_phrase(
-        lemma, tense, polarity, plural_subject=len(agent_refs) >= 2, necessity=necessity, force_bare=force_bare_verb
+        lemma, tense, polarity, plural_subject=len(agent_refs) >= 2,
+        necessity=necessity, aspect=aspect, force_bare=force_bare_verb,
     )
     confidence_adverb = _confidence_adverb(attitude.get("confidence")) if attitude else None
     if confidence_adverb:
@@ -220,7 +266,7 @@ def _render_content(
 
 def _render_request(message: dict, content: dict, catalog: Catalog, message_id: str, attitude: dict | None) -> str:
     predicate, roles = _content_parts(content, message_id, "content")
-    lemma, tense, polarity = _validate_predicate(predicate, message_id, "content.predicate")
+    lemma, tense, polarity, _aspect = _validate_predicate(predicate, message_id, "content.predicate")
     _check_known_roles(roles, message_id, "content.roles")
 
     # sender presence/shape is already guaranteed by render_message's envelope check.
@@ -254,7 +300,7 @@ def _render_request(message: dict, content: dict, catalog: Catalog, message_id: 
 def _render_catenative(outer_lemma: str, content: dict, catalog: Catalog, message_id: str, attitude: dict | None) -> str:
     """reject ("refuses to V") / failure ("failed to V"): <agent> <outer_lemma'd> to <lemma> [patient] [to recipient]."""
     predicate, roles = _content_parts(content, message_id, "content")
-    lemma, tense, polarity = _validate_predicate(predicate, message_id, "content.predicate")
+    lemma, tense, polarity, _aspect = _validate_predicate(predicate, message_id, "content.predicate")
     _check_known_roles(roles, message_id, "content.roles")
 
     subject = _ref_phrase(roles.get("agent"), catalog, message_id, "content.roles.agent")
@@ -317,7 +363,7 @@ def _render_close(message: dict, content: dict, catalog: Catalog, message_id: st
 
 def _render_query(content: dict, catalog: Catalog, message_id: str, gap: str | None) -> str:
     predicate, roles = _content_parts(content, message_id, "content")
-    lemma, tense, polarity = _validate_predicate(predicate, message_id, "content.predicate")
+    lemma, tense, polarity, _aspect = _validate_predicate(predicate, message_id, "content.predicate")
 
     if gap is not None and gap not in ("agent", "patient", "recipient"):
         raise InvalidValue(message_id, "gap", f"got {gap!r}")

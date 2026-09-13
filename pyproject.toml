@@ -1,12 +1,21 @@
 [project]
-name = "amp"
-version = "0.2.0"
-description = "AI-to-AI message protocol v0.1: JSON structured messages to English audit-log sentences."
+name = "amp-protocol"
+version = "0.3.0"
+description = "AI-to-AI message protocol: JSON structured messages to English audit-log sentences."
+readme = "README.md"
+license = "MIT"
 requires-python = ">=3.10"
 dependencies = [
     "lemminflect",
     "inflect",
 ]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Repository = "https://github.com/name1423user/amp"
 
 [project.optional-dependencies]
 dev = ["pytest"]
