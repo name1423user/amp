@@ -78,6 +78,18 @@ role に `props`(スケールなし属性)・`measurements`(スケールあり�
 
 独立に書かれた第二の実装が現れる(または具体的な接続予定が立つ)まで、handshake・語彙衝突解決・3者以上の会話は実装しない。理由は判断書を参照。単一実装の段階ではテストしようがないコードを増やすだけになるため。
 
+## 独立実装、歓迎します
+
+このプロトコルが実用になる条件は「独立に書かれた2つの実装が相互運用できる」ことです([判断書](../amp-handoff/amp-handoff/00-判断書.md)参照)。現在の実装はPython製のこの1本のみで、`amp render`が実際に検証してきたのはAI自身が生成したメッセージ([`reference/v1.0-roundtrip-verification.md`](reference/v1.0-roundtrip-verification.md))と、仕様書を渡していない別ベンダーのAI(Gemini)がどこまで意味を読み取れるか([`reference/gemini-blind-test.md`](reference/gemini-blind-test.md))までです。「別の実装がこの仕様を読んで、独立に同じ結論を出すか」はまだ一度も検証されていません。
+
+別言語・別実装者によるrenderer実装を歓迎します。最小要件:
+
+- [`spec/01-v0.1仕様.md`](spec/01-v0.1仕様.md) に準拠すること(この文書だけで実装できるように書かれています)
+- [`tests/golden.jsonl`](tests/golden.jsonl) の入力→期待英文のペアを再現できること(仕様書と食い違ったらgolden.jsonlが正)
+- 可能であれば、[`examples/v1-roundtrip-messages.jsonl`](examples/v1-roundtrip-messages.jsonl) のような実際のAI間メッセージ交換で動作確認されていること
+
+実装ができたら、[GitHub Issue/PR](https://github.com/name1423user/amp) で教えてください。相互運用性の検証(同じメッセージを両実装に通して同じ英文が出るか)を一緒にやりたいです。
+
 ## 開発
 
 ```bash

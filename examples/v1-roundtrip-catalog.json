@@ -1,0 +1,10 @@
+{
+  "version": "0.1",
+  "entries": [
+    { "id": "entity:agent.a", "kind": "individual", "type": "type:agent", "label": { "en": "AI-A" }, "proper": true },
+    { "id": "entity:agent.b", "kind": "individual", "type": "type:agent", "label": { "en": "AI-B" }, "proper": true },
+    { "id": "entity:file.a", "kind": "individual", "type": "type:file", "label": { "en": "file.a" }, "proper": true },
+    { "id": "type:agent", "kind": "type", "generic_label": { "en": "agent" } },
+    { "id": "type:file", "kind": "type", "generic_label": { "en": "file" } }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "version": "0.1",
+  "entries": [
+    { "id": "type:agent", "kind": "type", "generic_label": { "en": "agent" } },
+    { "id": "type:option", "kind": "type", "generic_label": { "en": "option" } },
+
+    { "id": "entity:agent.utility", "kind": "individual", "type": "type:agent", "label": { "en": "Utility" }, "proper": true },
+    { "id": "entity:agent.quality", "kind": "individual", "type": "type:agent", "label": { "en": "Quality" }, "proper": true },
+    { "id": "entity:agent.validation", "kind": "individual", "type": "type:agent", "label": { "en": "Validation" }, "proper": true },
+
+    { "id": "entity:option.a", "kind": "individual", "type": "type:option", "label": { "en": "Option A (proceed to MAGI integration)" }, "proper": true },
+    { "id": "entity:option.b", "kind": "individual", "type": "type:option", "label": { "en": "Option B (seek a second independent implementation)" }, "proper": true },
+    { "id": "entity:option.c", "kind": "individual", "type": "type:option", "label": { "en": "Option C (implement deferred extensions early)" }, "proper": true },
+    { "id": "entity:option.d", "kind": "individual", "type": "type:option", "label": { "en": "Option D (focus on publicizing the PyPI release)" }, "proper": true }
+  ]
+}
