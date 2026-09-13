@@ -35,6 +35,7 @@ from .inflect_ import verb_past, verb_present_3sg
 
 KNOWN_ROLES = ("agent", "patient", "recipient")
 MAX_CLAUSE_DEPTH = 1
+REQUIRED_ENVELOPE_FIELDS = ("id", "conversation", "sender", "receiver", "timestamp")
 
 NECESSITY_MODALS = ("may", "should", "must")
 EVIDENCE_ADVERBS = {"inferred": "Apparently", "reported": "Reportedly", "assumed": "Presumably"}
@@ -60,9 +61,10 @@ def _confidence_adverb(confidence: float | None) -> str | None:
 
 
 def _parse_attitude(message: dict, message_id: str) -> dict | None:
-    attitude = message.get("attitude")
-    if not attitude:
+    raw = message.get("attitude")
+    if not raw:
         return None
+    attitude = _as_object(raw, message_id, "attitude")
 
     confidence = attitude.get("confidence")
     if confidence is not None:
@@ -101,6 +103,15 @@ def _verb_phrase(
     return verb_past(lemma)
 
 
+def _as_object(value, message_id: str, field_path: str) -> dict:
+    """None -> {} (absent is fine, callers report MissingField downstream); anything else non-dict is loud."""
+    if value is None:
+        return {}
+    if not isinstance(value, dict):
+        raise InvalidValue(message_id, field_path, f"expected an object, got {type(value).__name__}")
+    return value
+
+
 def _validate_predicate(predicate: dict, message_id: str, field_path: str) -> tuple[str, str, str]:
     lemma = predicate.get("lemma")
     if not lemma:
@@ -125,13 +136,20 @@ def _validate_predicate(predicate: dict, message_id: str, field_path: str) -> tu
 
 def _ref_phrase(role_value: dict | None, catalog: Catalog, message_id: str, field_path: str) -> str | None:
     """refs-only noun phrase for roles that don't support §9.1 clause embedding. None if the role is absent."""
-    role_value = role_value or {}
+    role_value = _as_object(role_value, message_id, field_path)
     if "clause" in role_value:
         raise UnsupportedRole(message_id, field_path, f"{field_path.rsplit('.', 1)[-1]} cannot be a clause here")
     refs = role_value.get("refs")
     if not refs:
         return None
     return nounphrase.build(refs, catalog, message_id, f"{field_path}.refs")
+
+
+def _content_parts(content, message_id: str, field_path: str) -> tuple[dict, dict]:
+    content = _as_object(content, message_id, field_path)
+    predicate = _as_object(content.get("predicate"), message_id, f"{field_path}.predicate")
+    roles = _as_object(content.get("roles"), message_id, f"{field_path}.roles")
+    return predicate, roles
 
 
 def _check_known_roles(roles: dict, message_id: str, field_path: str) -> None:
@@ -143,7 +161,7 @@ def _check_known_roles(roles: dict, message_id: str, field_path: str) -> None:
 def _patient_phrase(
     role_value: dict | None, catalog: Catalog, message_id: str, field_path: str, depth: int, governing_lemma: str
 ) -> str:
-    role_value = role_value or {}
+    role_value = _as_object(role_value, message_id, field_path)
     has_refs, has_clause = "refs" in role_value, "clause" in role_value
     if has_refs and has_clause:
         raise InvalidValue(message_id, field_path, "role must have exactly one of refs/clause")
@@ -165,12 +183,11 @@ def _render_content(
     content: dict, catalog: Catalog, message_id: str, field_path: str, depth: int,
     attitude: dict | None = None, force_bare_verb: bool = False,
 ) -> str:
-    lemma, tense, polarity = _validate_predicate((content or {}).get("predicate") or {}, message_id, f"{field_path}.predicate")
-
-    roles = (content or {}).get("roles") or {}
+    predicate, roles = _content_parts(content, message_id, field_path)
+    lemma, tense, polarity = _validate_predicate(predicate, message_id, f"{field_path}.predicate")
     _check_known_roles(roles, message_id, f"{field_path}.roles")
 
-    agent_value = roles.get("agent") or {}
+    agent_value = _as_object(roles.get("agent"), message_id, f"{field_path}.roles.agent")
     if "clause" in agent_value:
         raise UnsupportedRole(message_id, f"{field_path}.roles.agent", "agent cannot be a clause")
     agent_refs = agent_value.get("refs")
@@ -202,15 +219,12 @@ def _render_content(
 
 
 def _render_request(message: dict, content: dict, catalog: Catalog, message_id: str, attitude: dict | None) -> str:
-    lemma, tense, polarity = _validate_predicate((content or {}).get("predicate") or {}, message_id, "content.predicate")
-
-    roles = (content or {}).get("roles") or {}
+    predicate, roles = _content_parts(content, message_id, "content")
+    lemma, tense, polarity = _validate_predicate(predicate, message_id, "content.predicate")
     _check_known_roles(roles, message_id, "content.roles")
 
-    sender_id = message.get("sender")
-    if not sender_id:
-        raise MissingField(message_id, "sender", "sender is required")
-    requester = nounphrase.build([sender_id], catalog, message_id, "sender")
+    # sender presence/shape is already guaranteed by render_message's envelope check.
+    requester = nounphrase.build([message["sender"]], catalog, message_id, "sender")
 
     doer = _ref_phrase(roles.get("agent"), catalog, message_id, "content.roles.agent")
     if not doer:
@@ -239,9 +253,8 @@ def _render_request(message: dict, content: dict, catalog: Catalog, message_id: 
 
 def _render_catenative(outer_lemma: str, content: dict, catalog: Catalog, message_id: str, attitude: dict | None) -> str:
     """reject ("refuses to V") / failure ("failed to V"): <agent> <outer_lemma'd> to <lemma> [patient] [to recipient]."""
-    lemma, tense, polarity = _validate_predicate((content or {}).get("predicate") or {}, message_id, "content.predicate")
-
-    roles = (content or {}).get("roles") or {}
+    predicate, roles = _content_parts(content, message_id, "content")
+    lemma, tense, polarity = _validate_predicate(predicate, message_id, "content.predicate")
     _check_known_roles(roles, message_id, "content.roles")
 
     subject = _ref_phrase(roles.get("agent"), catalog, message_id, "content.roles.agent")
@@ -271,7 +284,7 @@ def _render_catenative(outer_lemma: str, content: dict, catalog: Catalog, messag
 
 
 def _render_close(message: dict, content: dict, catalog: Catalog, message_id: str, attitude: dict | None) -> str:
-    predicate = (content or {}).get("predicate") or {}
+    predicate, roles = _content_parts(content, message_id, "content")
     tense = predicate.get("tense")
     if not tense:
         raise MissingField(message_id, "content.predicate.tense", "tense is required")
@@ -284,15 +297,12 @@ def _render_close(message: dict, content: dict, catalog: Catalog, message_id: st
     if aspect != "simple":
         raise UnsupportedAspect(message_id, "content.predicate.aspect", f"got {aspect!r}")
 
-    roles = (content or {}).get("roles") or {}
     if roles:
         first_role = next(iter(roles))
         raise UnsupportedRole(message_id, f"content.roles.{first_role}", "close takes no roles")
 
-    sender_id = message.get("sender")
-    if not sender_id:
-        raise MissingField(message_id, "sender", "sender is required")
-    subject = nounphrase.build([sender_id], catalog, message_id, "sender")
+    # sender presence/shape is already guaranteed by render_message's envelope check.
+    subject = nounphrase.build([message["sender"]], catalog, message_id, "sender")
 
     necessity = attitude.get("necessity") if attitude else None
     verb = _verb_phrase("end", tense, polarity, plural_subject=False, necessity=necessity)
@@ -306,12 +316,12 @@ def _render_close(message: dict, content: dict, catalog: Catalog, message_id: st
 
 
 def _render_query(content: dict, catalog: Catalog, message_id: str, gap: str | None) -> str:
-    lemma, tense, polarity = _validate_predicate((content or {}).get("predicate") or {}, message_id, "content.predicate")
+    predicate, roles = _content_parts(content, message_id, "content")
+    lemma, tense, polarity = _validate_predicate(predicate, message_id, "content.predicate")
 
     if gap is not None and gap not in ("agent", "patient", "recipient"):
         raise InvalidValue(message_id, "gap", f"got {gap!r}")
 
-    roles = (content or {}).get("roles") or {}
     _check_known_roles(roles, message_id, "content.roles")
     if gap and gap in roles:
         raise InvalidValue(message_id, f"content.roles.{gap}", f"role {gap!r} is the query gap; omit it from roles")
@@ -348,11 +358,20 @@ SUPPORTED_ACTS = ("inform", "request", "query", "commit", "reject", "failure", "
 
 
 def render_message(message: dict, catalog: Catalog) -> str:
+    if not isinstance(message, dict):
+        raise InvalidValue("?", "<message>", f"a message must be a JSON object, got {type(message).__name__}")
+
     message_id = message.get("id", "?")
 
     protocol = message.get("protocol")
     if protocol != "amp/0.1":
         raise UnsupportedProtocol(message_id, "protocol", f"got {protocol!r}")
+
+    for field in REQUIRED_ENVELOPE_FIELDS:
+        if not message.get(field):
+            raise MissingField(message_id, field, f"{field} is required")
+    if not isinstance(message["receiver"], list):
+        raise InvalidValue(message_id, "receiver", "receiver must be an array")
 
     act = message.get("act")
     if act not in SUPPORTED_ACTS:
