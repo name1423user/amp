@@ -123,6 +123,23 @@ def _validate_predicate(predicate: dict, message_id: str, field_path: str) -> tu
     return lemma, tense, polarity
 
 
+def _ref_phrase(role_value: dict | None, catalog: Catalog, message_id: str, field_path: str) -> str | None:
+    """refs-only noun phrase for roles that don't support §9.1 clause embedding. None if the role is absent."""
+    role_value = role_value or {}
+    if "clause" in role_value:
+        raise UnsupportedRole(message_id, field_path, f"{field_path.rsplit('.', 1)[-1]} cannot be a clause here")
+    refs = role_value.get("refs")
+    if not refs:
+        return None
+    return nounphrase.build(refs, catalog, message_id, f"{field_path}.refs")
+
+
+def _check_known_roles(roles: dict, message_id: str, field_path: str) -> None:
+    for role_name in roles:
+        if role_name not in KNOWN_ROLES:
+            raise UnsupportedRole(message_id, f"{field_path}.{role_name}", f"unsupported role: {role_name!r}")
+
+
 def _patient_phrase(
     role_value: dict | None, catalog: Catalog, message_id: str, field_path: str, depth: int, governing_lemma: str
 ) -> str:
@@ -151,9 +168,7 @@ def _render_content(
     lemma, tense, polarity = _validate_predicate((content or {}).get("predicate") or {}, message_id, f"{field_path}.predicate")
 
     roles = (content or {}).get("roles") or {}
-    for role_name in roles:
-        if role_name not in KNOWN_ROLES:
-            raise UnsupportedRole(message_id, f"{field_path}.roles.{role_name}", f"unsupported role: {role_name!r}")
+    _check_known_roles(roles, message_id, f"{field_path}.roles")
 
     agent_value = roles.get("agent") or {}
     if "clause" in agent_value:
@@ -177,13 +192,9 @@ def _render_content(
     if "patient" in roles:
         parts.append(_patient_phrase(roles["patient"], catalog, message_id, f"{field_path}.roles.patient", depth, lemma))
 
-    if "recipient" in roles:
-        recipient_value = roles["recipient"] or {}
-        if "clause" in recipient_value:
-            raise UnsupportedRole(message_id, f"{field_path}.roles.recipient", "recipient cannot be a clause")
-        recipient_refs = recipient_value.get("refs")
-        if recipient_refs:
-            parts.append("to " + nounphrase.build(recipient_refs, catalog, message_id, f"{field_path}.roles.recipient.refs"))
+    recipient_phrase = _ref_phrase(roles.get("recipient"), catalog, message_id, f"{field_path}.roles.recipient")
+    if recipient_phrase:
+        parts.append("to " + recipient_phrase)
 
     core = " ".join(parts)
     evidence_adverb = EVIDENCE_ADVERBS.get(attitude.get("evidence")) if attitude else None
@@ -194,22 +205,16 @@ def _render_request(message: dict, content: dict, catalog: Catalog, message_id: 
     lemma, tense, polarity = _validate_predicate((content or {}).get("predicate") or {}, message_id, "content.predicate")
 
     roles = (content or {}).get("roles") or {}
-    for role_name in roles:
-        if role_name not in KNOWN_ROLES:
-            raise UnsupportedRole(message_id, f"content.roles.{role_name}", f"unsupported role: {role_name!r}")
+    _check_known_roles(roles, message_id, "content.roles")
 
     sender_id = message.get("sender")
     if not sender_id:
         raise MissingField(message_id, "sender", "sender is required")
     requester = nounphrase.build([sender_id], catalog, message_id, "sender")
 
-    agent_value = roles.get("agent") or {}
-    if "clause" in agent_value:
-        raise UnsupportedRole(message_id, "content.roles.agent", "agent cannot be a clause for request")
-    agent_refs = agent_value.get("refs")
-    if not agent_refs:
+    doer = _ref_phrase(roles.get("agent"), catalog, message_id, "content.roles.agent")
+    if not doer:
         raise MissingField(message_id, "content.roles.agent", "agent (who is asked to act) is required")
-    doer = nounphrase.build(agent_refs, catalog, message_id, "content.roles.agent.refs")
 
     necessity = attitude.get("necessity") if attitude else None
     verb = _verb_phrase("request", tense, polarity, plural_subject=False, necessity=necessity)
@@ -219,23 +224,127 @@ def _render_request(message: dict, content: dict, catalog: Catalog, message_id: 
 
     parts = [requester, verb, doer, f"to {lemma}"]
 
-    patient_value = roles.get("patient") or {}
-    if "clause" in patient_value:
-        raise UnsupportedRole(message_id, "content.roles.patient", "patient cannot be a clause for request (v0.2)")
-    patient_refs = patient_value.get("refs")
-    if patient_refs:
-        parts.append(nounphrase.build(patient_refs, catalog, message_id, "content.roles.patient.refs"))
+    patient_phrase = _ref_phrase(roles.get("patient"), catalog, message_id, "content.roles.patient")
+    if patient_phrase:
+        parts.append(patient_phrase)
 
-    recipient_value = roles.get("recipient") or {}
-    if "clause" in recipient_value:
-        raise UnsupportedRole(message_id, "content.roles.recipient", "recipient cannot be a clause")
-    recipient_refs = recipient_value.get("refs")
-    if recipient_refs:
-        parts.append("to " + nounphrase.build(recipient_refs, catalog, message_id, "content.roles.recipient.refs"))
+    recipient_phrase = _ref_phrase(roles.get("recipient"), catalog, message_id, "content.roles.recipient")
+    if recipient_phrase:
+        parts.append("to " + recipient_phrase)
 
     core = " ".join(parts)
     evidence_adverb = EVIDENCE_ADVERBS.get(attitude.get("evidence")) if attitude else None
     return f"{evidence_adverb}, {core}" if evidence_adverb else core
+
+
+def _render_catenative(outer_lemma: str, content: dict, catalog: Catalog, message_id: str, attitude: dict | None) -> str:
+    """reject ("refuses to V") / failure ("failed to V"): <agent> <outer_lemma'd> to <lemma> [patient] [to recipient]."""
+    lemma, tense, polarity = _validate_predicate((content or {}).get("predicate") or {}, message_id, "content.predicate")
+
+    roles = (content or {}).get("roles") or {}
+    _check_known_roles(roles, message_id, "content.roles")
+
+    subject = _ref_phrase(roles.get("agent"), catalog, message_id, "content.roles.agent")
+    if not subject:
+        raise MissingField(message_id, "content.roles.agent", "agent is required")
+    agent_refs = roles["agent"]["refs"]
+
+    necessity = attitude.get("necessity") if attitude else None
+    verb = _verb_phrase(outer_lemma, tense, polarity, plural_subject=len(agent_refs) >= 2, necessity=necessity)
+    confidence_adverb = _confidence_adverb(attitude.get("confidence")) if attitude else None
+    if confidence_adverb:
+        verb = f"{confidence_adverb} {verb}"
+
+    parts = [subject, verb, f"to {lemma}"]
+
+    patient_phrase = _ref_phrase(roles.get("patient"), catalog, message_id, "content.roles.patient")
+    if patient_phrase:
+        parts.append(patient_phrase)
+
+    recipient_phrase = _ref_phrase(roles.get("recipient"), catalog, message_id, "content.roles.recipient")
+    if recipient_phrase:
+        parts.append("to " + recipient_phrase)
+
+    core = " ".join(parts)
+    evidence_adverb = EVIDENCE_ADVERBS.get(attitude.get("evidence")) if attitude else None
+    return f"{evidence_adverb}, {core}" if evidence_adverb else core
+
+
+def _render_close(message: dict, content: dict, catalog: Catalog, message_id: str, attitude: dict | None) -> str:
+    predicate = (content or {}).get("predicate") or {}
+    tense = predicate.get("tense")
+    if not tense:
+        raise MissingField(message_id, "content.predicate.tense", "tense is required")
+    if tense not in ("present", "past"):
+        raise InvalidValue(message_id, "content.predicate.tense", f"got {tense!r}")
+    polarity = predicate.get("polarity", "affirmative")
+    if polarity not in ("affirmative", "negative"):
+        raise InvalidValue(message_id, "content.predicate.polarity", f"got {polarity!r}")
+    aspect = predicate.get("aspect", "simple")
+    if aspect != "simple":
+        raise UnsupportedAspect(message_id, "content.predicate.aspect", f"got {aspect!r}")
+
+    roles = (content or {}).get("roles") or {}
+    if roles:
+        first_role = next(iter(roles))
+        raise UnsupportedRole(message_id, f"content.roles.{first_role}", "close takes no roles")
+
+    sender_id = message.get("sender")
+    if not sender_id:
+        raise MissingField(message_id, "sender", "sender is required")
+    subject = nounphrase.build([sender_id], catalog, message_id, "sender")
+
+    necessity = attitude.get("necessity") if attitude else None
+    verb = _verb_phrase("end", tense, polarity, plural_subject=False, necessity=necessity)
+    confidence_adverb = _confidence_adverb(attitude.get("confidence")) if attitude else None
+    if confidence_adverb:
+        verb = f"{confidence_adverb} {verb}"
+
+    core = f"{subject} {verb} the conversation"
+    evidence_adverb = EVIDENCE_ADVERBS.get(attitude.get("evidence")) if attitude else None
+    return f"{evidence_adverb}, {core}" if evidence_adverb else core
+
+
+def _render_query(content: dict, catalog: Catalog, message_id: str, gap: str | None) -> str:
+    lemma, tense, polarity = _validate_predicate((content or {}).get("predicate") or {}, message_id, "content.predicate")
+
+    if gap is not None and gap not in ("agent", "patient", "recipient"):
+        raise InvalidValue(message_id, "gap", f"got {gap!r}")
+
+    roles = (content or {}).get("roles") or {}
+    _check_known_roles(roles, message_id, "content.roles")
+    if gap and gap in roles:
+        raise InvalidValue(message_id, f"content.roles.{gap}", f"role {gap!r} is the query gap; omit it from roles")
+
+    negate = "not " if polarity == "negative" else ""
+
+    if gap == "agent":
+        # "who" is grammatically singular and needs no do-support inversion — a plain declarative verb phrase.
+        parts = ["who", _verb_phrase(lemma, tense, polarity, plural_subject=False, necessity=None)]
+    else:
+        agent_phrase = _ref_phrase(roles.get("agent"), catalog, message_id, "content.roles.agent")
+        if not agent_phrase:
+            raise MissingField(message_id, "content.roles.agent", "agent is required unless it is the gap")
+        agent_refs = roles["agent"]["refs"]
+        aux = "did" if tense == "past" else ("do" if len(agent_refs) >= 2 else "does")
+        lead = {"patient": "what", "recipient": "to whom"}.get(gap)
+        # lowercase throughout — render_message capitalizes whichever word actually ends up first.
+        parts = ([lead] if lead else []) + [aux, agent_phrase, f"{negate}{lemma}"]
+
+    if gap != "patient":
+        patient_phrase = _ref_phrase(roles.get("patient"), catalog, message_id, "content.roles.patient")
+        if patient_phrase:
+            parts.append(patient_phrase)
+
+    if gap != "recipient":
+        recipient_phrase = _ref_phrase(roles.get("recipient"), catalog, message_id, "content.roles.recipient")
+        if recipient_phrase:
+            parts.append("to " + recipient_phrase)
+
+    return " ".join(parts) + "?"
+
+
+SUPPORTED_ACTS = ("inform", "request", "query", "commit", "reject", "failure", "close")
 
 
 def render_message(message: dict, catalog: Catalog) -> str:
@@ -246,13 +355,36 @@ def render_message(message: dict, catalog: Catalog) -> str:
         raise UnsupportedProtocol(message_id, "protocol", f"got {protocol!r}")
 
     act = message.get("act")
-    if act not in ("inform", "request"):
+    if act not in SUPPORTED_ACTS:
         raise UnsupportedAct(message_id, "act", f"got {act!r}")
 
-    attitude = _parse_attitude(message, message_id)
     content = message.get("content")
-    if act == "request":
-        sentence = _render_request(message, content, catalog, message_id, attitude)
-    else:
+
+    if act == "query":
+        # query has no attitude yet (v0.2): no grounded rule for confidence-adverb-in-a-question exists.
+        if message.get("attitude"):
+            raise InvalidValue(message_id, "attitude", "attitude is not supported for query yet (v0.2)")
+        sentence = _render_query(content, catalog, message_id, message.get("gap"))
+        return sentence[0].upper() + sentence[1:]  # already ends in "?"
+
+    attitude = _parse_attitude(message, message_id)
+
+    if act == "inform":
         sentence = _render_content(content, catalog, message_id, "content", depth=0, attitude=attitude)
+    elif act == "request":
+        sentence = _render_request(message, content, catalog, message_id, attitude)
+    elif act == "commit":
+        # "will [not] <lemma> ..." is exactly the necessity-modal shape already built for inform.
+        # Two modals can't stack, so a real necessity here is a conflict, not a silent override.
+        if attitude and attitude.get("necessity"):
+            raise InvalidValue(message_id, "attitude.necessity", "commit already carries 'will'; cannot add another modal")
+        commit_attitude = {**(attitude or {}), "necessity": "will"}
+        sentence = _render_content(content, catalog, message_id, "content", depth=0, attitude=commit_attitude)
+    elif act == "reject":
+        sentence = _render_catenative("refuse", content, catalog, message_id, attitude)
+    elif act == "failure":
+        sentence = _render_catenative("fail", content, catalog, message_id, attitude)
+    else:  # close
+        sentence = _render_close(message, content, catalog, message_id, attitude)
+
     return sentence[0].upper() + sentence[1:] + "."
