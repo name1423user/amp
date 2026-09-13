@@ -1,0 +1,141 @@
+{
+  "version": "0.1",
+  "entries": [
+    {
+      "id": "type:agent",
+      "kind": "type",
+      "generic_label": {
+        "en": "agent"
+      }
+    },
+    {
+      "id": "type:file",
+      "kind": "type",
+      "generic_label": {
+        "en": "file"
+      }
+    },
+    {
+      "id": "type:index",
+      "kind": "type",
+      "generic_label": {
+        "en": "index"
+      }
+    },
+    {
+      "id": "type:error",
+      "kind": "type",
+      "generic_label": {
+        "en": "error"
+      }
+    },
+    {
+      "id": "type:software",
+      "kind": "type",
+      "generic_label": {
+        "en": "software"
+      }
+    },
+    {
+      "id": "type:software.browser",
+      "kind": "type",
+      "parent": "type:software",
+      "generic_label": {
+        "en": "browser"
+      }
+    },
+    {
+      "id": "entity:agent.a",
+      "kind": "individual",
+      "type": "type:agent",
+      "label": {
+        "en": "AI-A"
+      },
+      "proper": true
+    },
+    {
+      "id": "entity:agent.b",
+      "kind": "individual",
+      "type": "type:agent",
+      "label": {
+        "en": "AI-B"
+      },
+      "proper": true
+    },
+    {
+      "id": "entity:agent.c",
+      "kind": "individual",
+      "type": "type:agent",
+      "label": {
+        "en": "AI-C"
+      },
+      "proper": true
+    },
+    {
+      "id": "entity:file.a",
+      "kind": "individual",
+      "type": "type:file",
+      "label": {
+        "en": "a.json"
+      },
+      "proper": true
+    },
+    {
+      "id": "entity:file.b",
+      "kind": "individual",
+      "type": "type:file",
+      "label": {
+        "en": "b.json"
+      },
+      "proper": true
+    },
+    {
+      "id": "entity:file.c",
+      "kind": "individual",
+      "type": "type:file",
+      "label": {
+        "en": "c.json"
+      },
+      "proper": true
+    },
+    {
+      "id": "entity:tmp.1",
+      "kind": "individual",
+      "type": "type:file"
+    },
+    {
+      "id": "entity:tmp.2",
+      "kind": "individual",
+      "type": "type:file"
+    },
+    {
+      "id": "entity:tmp.3",
+      "kind": "individual",
+      "type": "type:file"
+    },
+    {
+      "id": "entity:index.main",
+      "kind": "individual",
+      "type": "type:index"
+    },
+    {
+      "id": "entity:error.e1",
+      "kind": "individual",
+      "type": "type:error"
+    },
+    {
+      "id": "entity:browser.x",
+      "kind": "individual",
+      "type": "type:software.browser"
+    },
+    {
+      "id": "entity:trueful",
+      "kind": "individual",
+      "type": "type:software.browser",
+      "label": {
+        "en": "Trueful"
+      },
+      "proper": true
+    }
+  ]
+}

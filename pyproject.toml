@@ -1,0 +1,22 @@
+[project]
+name = "amp"
+version = "0.2.0"
+description = "AI-to-AI message protocol v0.1: JSON structured messages to English audit-log sentences."
+requires-python = ">=3.10"
+dependencies = [
+    "lemminflect",
+    "inflect",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+amp = "amp.cli:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["amp*"]

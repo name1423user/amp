@@ -1,0 +1,18 @@
+{
+  "version": "0.1",
+  "entries": [
+    { "id": "type:agent", "kind": "type", "generic_label": { "en": "agent" } },
+    { "id": "type:option", "kind": "type", "generic_label": { "en": "option" } },
+    { "id": "type:software", "kind": "type", "generic_label": { "en": "software" } },
+
+    { "id": "entity:magi", "kind": "individual", "type": "type:agent", "label": { "en": "MAGI" }, "proper": true },
+    { "id": "entity:ruria", "kind": "individual", "type": "type:agent", "label": { "en": "Ruria" }, "proper": true },
+    { "id": "entity:claude", "kind": "individual", "type": "type:agent", "label": { "en": "Claude" }, "proper": true },
+    { "id": "entity:amp", "kind": "individual", "type": "type:software", "label": { "en": "amp" }, "proper": true },
+
+    { "id": "entity:option.a", "kind": "individual", "type": "type:option" },
+    { "id": "entity:option.b", "kind": "individual", "type": "type:option" },
+    { "id": "entity:option.c", "kind": "individual", "type": "type:option" },
+    { "id": "entity:option.d", "kind": "individual", "type": "type:option" }
+  ]
+}
