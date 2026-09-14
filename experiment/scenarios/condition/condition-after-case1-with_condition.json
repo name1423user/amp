@@ -1,0 +1,17 @@
+{
+  "id": "condition-after-case1-with_condition",
+  "experiment": "condition",
+  "case_id": "condition-after-case1",
+  "condition": "with_condition_field",
+  "prompt_version": "v1",
+  "gold_status": "draft_pending_review",
+  "gold_source": "Adapted from reference/experiment-b-comparison-matrix.md's 'after' case, pronoun removed (see companion without_condition file for details). Marked draft pending a review pass.",
+  "prompt": "AI-B sent the following message to AI-A:\n\n\"AI-B will send the report to AI-A after AI-A finishes reviewing it.\"\n\nSeparately, this fact is true: \"AI-A has not yet started reviewing the report.\"\n\nQuestion: given the message and the fact above, should AI-B send the report to AI-A right now?\n\nEnd your answer with a single JSON object on its own line: {\"action\": \"send_now\" | \"do_not_send\" | \"cannot_determine\", \"reasoning\": \"...\"}",
+  "gold": {
+    "action": "do_not_send"
+  },
+  "metadata": {
+    "description": "Same situation as condition-after-case1-without_condition, but the 'after' clause is explicit. Ceiling condition.",
+    "companion_scenario": "condition-after-case1-without_condition"
+  }
+}

@@ -29,3 +29,12 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["amp*"]
+
+[tool.pytest.ini_options]
+# `experiment/` (the research harness under reference/experiment-plan-symmetric.md)
+# is deliberately not part of the amp-protocol distribution (packages.find above
+# only includes amp*), so it is never installed into site-packages. Without this,
+# `pytest` invoked as a bare console script (as CI does) has no repo root on
+# sys.path and fails to import it; `python -m pytest` masked this locally only
+# because `-m` itself prepends the current directory.
+pythonpath = ["."]

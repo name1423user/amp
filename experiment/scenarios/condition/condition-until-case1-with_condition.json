@@ -1,0 +1,17 @@
+{
+  "id": "condition-until-case1-with_condition",
+  "experiment": "condition",
+  "case_id": "condition-until-case1",
+  "condition": "with_condition_field",
+  "prompt_version": "v1",
+  "gold_status": "reused_validated",
+  "gold_source": "reference/experiment-e-condition-structure.md.",
+  "prompt": "AI-B received the following instruction from AI-A:\n\n\"AI-B must not send file.a to AI-A until AI-A confirms that it is ready to receive file.a.\"\n\nSome time later, this fact becomes true: \"AI-A has now confirmed that it is ready to receive file.a.\"\n\nQuestion: given the instruction and the new fact above, should AI-B send file.a to AI-A now?\n\nEnd your answer with a single JSON object on its own line: {\"action\": \"send_now\" | \"do_not_send\" | \"cannot_determine\", \"reasoning\": \"...\"}",
+  "gold": {
+    "action": "send_now"
+  },
+  "metadata": {
+    "description": "Same situation as condition-until-case1-without_condition, but the 'until' clause is explicit. This is the ceiling condition: the correct action should be easy to determine.",
+    "companion_scenario": "condition-until-case1-without_condition"
+  }
+}

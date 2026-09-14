@@ -1,0 +1,20 @@
+{
+  "id": "entity-case2-minimal_structured",
+  "experiment": "entity_reference",
+  "case_id": "entity-case2",
+  "condition": "minimal_structured",
+  "prompt_version": "v1",
+  "gold_status": "draft_pending_review",
+  "gold_source": "Authored by Claude (this session) as a structural replica of entity-case1 with new surface content. Not yet independently reviewed or piloted.",
+  "prompt": "You will read a short workplace conversation, then a final instruction given only as a minimal reference object (no act, no verb) instead of a plain sentence or a full structured message.\n\nTurn 1 — Colleague: \"Can you get invoice-march.pdf ready to send to Priya?\"\nTurn 2 — You: \"Sure.\"\nTurn 3 — Colleague: \"Also, take a look at invoice-march-revised.pdf.\"\nTurn 4 — You: \"OK.\"\nTurn 5 — Colleague: \"And invoice-march-final.pdf needs attention too.\"\nTurn 6 — You: \"Noted.\"\nTurn 7 — Colleague sends only:\n{ \"patient\": \"invoice-march.pdf\", \"recipient\": \"priya\" }\n\n(There is no verb and no explicit act in Turn 7 — treat it as pointing at the file and person the earlier conversation's pending action concerns.)\n\nQuestion: which file (by exact filename) is Turn 7 about, and who is the recipient?\n\nEnd your answer with a single JSON object on its own line: {\"entity\": \"<filename or 'cannot_determine'>\", \"recipient\": \"<name or 'cannot_determine'>\", \"confidence\": \"<low|medium|high>\"}",
+  "gold": {
+    "entity": "invoice-march.pdf",
+    "recipient": "priya"
+  },
+  "metadata": {
+    "description": "Structural replica of entity-case1-minimal_structured (invoice domain). Uses the entity-only structured-object MAMP shape, not the sentence+bracket-annotation shape.",
+    "competition_type": "recency_vs_verb_semantics",
+    "distractors": ["invoice-march-revised.pdf", "invoice-march-final.pdf"],
+    "known_limitation": "Same as entity-case1-minimal_structured: cannot test act-conveyance, only referent resolution."
+  }
+}

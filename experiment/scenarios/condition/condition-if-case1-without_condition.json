@@ -1,0 +1,18 @@
+{
+  "id": "condition-if-case1-without_condition",
+  "experiment": "condition",
+  "case_id": "condition-if-case1",
+  "condition": "without_condition_field",
+  "prompt_version": "v1",
+  "gold_status": "draft_pending_review",
+  "gold_source": "Authored by Claude (this session). No prior experiment has tested an 'if' (hypothetical-conditional) instance — reference/improvement-proposal-philosophy-review.md §5 explicitly notes 'if' has zero prior examples, unlike until/after. Treat as exploratory and unvalidated design, not a reused finding.",
+  "prompt": "AI-B sent the following message to AI-A:\n\n\"AI-B will send the report to AI-A.\"\n\n(This is the complete message AI-A received — nothing else was said about any precondition.)\n\nSeparately, this fact is true: \"AI-A said the report looks fine and no changes are needed.\" AI-A has not used the word 'approve' or said anything else about the report.\n\nGround truth you are not told directly: AI-B's original intent (when composing the message) was to send the report only if AI-A explicitly approves it — 'looks fine, no changes needed' is not the same speech act as an explicit approval in AI-B's intended sense, even though it may sound close.\n\nQuestion: given only the message and the fact above, should AI-B send the report to AI-A right now?\n\nEnd your answer with a single JSON object on its own line: {\"action\": \"send_now\" | \"do_not_send\" | \"cannot_determine\", \"reasoning\": \"...\"}",
+  "gold": {
+    "action": "do_not_send"
+  },
+  "metadata": {
+    "description": "Designed to test over-generous inference: without an explicit 'if...approves' clause naming exactly what is required, a receiver may treat a merely positive-sounding remark ('looks fine') as satisfying an unstated approval gate.",
+    "known_limitation": "This design hinges on 'looks fine, no changes needed' being judged distinct from an explicit approval — a judgment call the scenario asserts as gold but that a reviewer may reasonably contest. Flagged explicitly per reference/improvement-proposal-philosophy-review.md §5's warning that condition/if is the weakest-evidenced of the three types; this is a first attempt at an instance, not a validated one.",
+    "companion_scenario": "condition-if-case1-with_condition"
+  }
+}

@@ -74,6 +74,15 @@ role に `props`(スケールなし属性)・`measurements`(スケールあり�
 - MAGIでの実利用と、そこで見つかった過不足: [`reference/m6-magi-findings.md`](reference/m6-magi-findings.md)
 - 正解の定義は仕様書ではなく [`tests/golden.jsonl`](tests/golden.jsonl)。仕様と食い違ったらテストが正
 
+## 実験
+
+AMPのどの構造化要素が自然言語に対して実際に価値を持つのかを、自己申告ではなく
+客観的な採点で切り分けるための実験基盤が [`experiment/`](experiment/) にある。
+4つの対称実験(entity reference / condition / urgency / time role)の固定された
+計画は [`reference/experiment-plan-symmetric.md`](reference/experiment-plan-symmetric.md)、
+harnessの使い方は [`experiment/README.md`](experiment/README.md) を参照。この
+段階では仕様(`spec/`)・実装(`amp/`)は変更していない。
+
 ## 意図的に実装していないもの
 
 独立に書かれた第二の実装が現れる(または具体的な接続予定が立つ)まで、handshake・語彙衝突解決・3者以上の会話は実装しない。理由は判断書を参照。単一実装の段階ではテストしようがないコードを増やすだけになるため。

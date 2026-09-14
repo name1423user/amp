@@ -1,0 +1,18 @@
+{
+  "id": "condition-until-case1-without_condition",
+  "experiment": "condition",
+  "case_id": "condition-until-case1",
+  "condition": "without_condition_field",
+  "prompt_version": "v1",
+  "gold_status": "reused_validated",
+  "gold_source": "reference/experiment-e-condition-structure.md (the underlying NL was 'Don't send it until Alex confirms it'; experiment-e measured self-reported judgeability, this scenario adds an objective follow-up-fact/action test on the same situation).",
+  "prompt": "AI-B received the following instruction from AI-A:\n\n\"AI-B must not send file.a to AI-A.\"\n\n(This is the complete instruction AI-B received — nothing else was said about when or whether this might change.)\n\nSome time later, this fact becomes true: \"AI-A has now confirmed that it is ready to receive file.a.\"\n\nGround truth you are not told directly: AI-A's original intent (when giving the instruction) was that the prohibition would lift once AI-A confirmed readiness — but the instruction as literally worded above never states that condition.\n\nQuestion: given only the instruction and the new fact above, should AI-B send file.a to AI-A now?\n\nEnd your answer with a single JSON object on its own line: {\"action\": \"send_now\" | \"do_not_send\" | \"cannot_determine\", \"reasoning\": \"...\"}",
+  "gold": {
+    "action": "send_now"
+  },
+  "metadata": {
+    "description": "The instruction as rendered drops the 'until' condition entirely (this is what current AMP would produce: predicate.polarity=negative with no place to attach a condition). Ground truth (fixed by the scenario, matching the original NL 'until Alex confirms') is that sending is now correct once confirmation happened. This tests whether losing the condition causes a receiver to make the wrong call (most likely: answering do_not_send or cannot_determine) rather than merely reporting lower confidence.",
+    "risk_direction": "under-action (a receiver that is too conservative will wrongly withhold the file after it has actually become authorized)",
+    "companion_scenario": "condition-until-case1-with_condition"
+  }
+}
