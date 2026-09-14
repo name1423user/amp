@@ -1,0 +1,17 @@
+{
+  "id": "urgency-case2-nl",
+  "experiment": "urgency",
+  "case_id": "urgency-case2",
+  "condition": "nl",
+  "prompt_version": "v1",
+  "gold_status": "draft_pending_review",
+  "gold_source": "Authored by Claude (this session) to cover the 'today' vs 'when you have time' contrast named in the implementation instructions (a subtler gap than urgency-case1's 'right now' vs 'eventually'). Not yet piloted.",
+  "prompt": "AI-B has two pending tasks, both requested by AI-A:\n\nTask 1: \"Please update the shared spreadsheet today.\"\nTask 2: \"Reorganize the archive folder when you have time.\"\n\nAI-B can only do one thing at a time this afternoon. Question: which task should AI-B do first?\n\nEnd your answer with a single JSON object on its own line: {\"first_task\": \"task_1\" | \"task_2\", \"reasoning\": \"...\"}",
+  "gold": {
+    "first_task": "task_1"
+  },
+  "metadata": {
+    "description": "Subtler urgency contrast than urgency-case1: 'today' (a same-day deadline) vs 'when you have time' (no deadline). This NL condition establishes the ceiling.",
+    "companion_scenario": "urgency-case2-full_amp_dropped"
+  }
+}

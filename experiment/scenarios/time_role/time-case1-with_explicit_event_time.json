@@ -1,0 +1,18 @@
+{
+  "id": "time-case1-with_explicit_event_time",
+  "experiment": "time_role",
+  "case_id": "time-case1",
+  "condition": "with_explicit_event_time",
+  "prompt_version": "v1",
+  "gold_status": "draft_pending_review",
+  "gold_source": "Scenario shape matches the minimal probe named in reference/improvement-proposal-philosophy-review.md §9-10 roadmap item 4 ('The report was uploaded at 10:00' vs 'This message was sent at 10:00'). No prior experiment ran this as an objective test; authored by Claude (this session), not yet piloted.",
+  "prompt": "AI-B sends AI-A the following message. The message's own send time (its AMP envelope timestamp) is 2026-09-14T15:00:00Z.\n\nMessage content: \"AI-B informs AI-A that the report was uploaded at 10:00 today.\"\n\nQuestion: at what time was the report uploaded (not when the message was sent)?\n\nEnd your answer with a single JSON object on its own line: {\"event_time\": \"<HH:MM or 'unknown'>\", \"reasoning\": \"...\"}",
+  "gold": {
+    "event_time": "10:00",
+    "message_time": "15:00"
+  },
+  "metadata": {
+    "description": "The event time is stated explicitly in the message content, distinct from the envelope's send timestamp. Ceiling condition: this distinction should be easy to make.",
+    "companion_scenario": "time-case1-message_time_only"
+  }
+}

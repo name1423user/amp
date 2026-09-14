@@ -1,0 +1,20 @@
+{
+  "id": "entity-case1-nl",
+  "experiment": "entity_reference",
+  "case_id": "entity-case1",
+  "condition": "nl",
+  "prompt_version": "v1",
+  "gold_status": "reused_validated",
+  "gold_source": "reference/experiment-h-full-vs-minimal-vs-nl.md, Round 2 (S4) — same competition pattern reused verbatim from experiment-g Trial 3, independently reproduced.",
+  "prompt": "You will read a short workplace conversation between two colleagues, then answer one question about the final message. Do not explain your uncertainty away — if more than one file genuinely fits, say so.\n\nTurn 1 — Colleague: \"Can you get report-final.pdf ready to send to Alex?\"\nTurn 2 — You: \"Sure.\"\nTurn 3 — Colleague: \"Also, take a look at report-final-v2.pdf.\"\nTurn 4 — You: \"OK.\"\nTurn 5 — Colleague: \"And report-final-reviewed.pdf needs attention too.\"\nTurn 6 — You: \"Noted.\"\nTurn 7 — Colleague: \"Go ahead and send it to Alex.\"\n\nQuestion: which file (by exact filename) does Turn 7 instruct you to send, and to whom? If you genuinely cannot tell, say so explicitly instead of guessing.\n\nEnd your answer with a single JSON object on its own line: {\"entity\": \"<filename or 'cannot_determine'>\", \"recipient\": \"<name or 'cannot_determine'>\", \"confidence\": \"<low|medium|high>\"}",
+  "gold": {
+    "entity": "report-final.pdf",
+    "recipient": "alex"
+  },
+  "metadata": {
+    "description": "Recency (report-final-reviewed.pdf, the most recently mentioned file) competes against verb-semantic binding (report-final.pdf is the only file actually tied to the verb 'send', in Turn 1).",
+    "competition_type": "recency_vs_verb_semantics",
+    "distractors": ["report-final-v2.pdf", "report-final-reviewed.pdf"],
+    "expected_failure_mode": "NL receivers tend to pick the most recently mentioned file (report-final-reviewed.pdf) or report multiple candidates / inability to determine, per experiment-h and experiment-g."
+  }
+}

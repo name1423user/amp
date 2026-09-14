@@ -1,0 +1,18 @@
+{
+  "id": "condition-after-case1-without_condition",
+  "experiment": "condition",
+  "case_id": "condition-after-case1",
+  "condition": "without_condition_field",
+  "prompt_version": "v1",
+  "gold_status": "draft_pending_review",
+  "gold_source": "Adapted from reference/experiment-b-comparison-matrix.md's 'after' case ('Send the file to Alex after he finishes reviewing it'). The original instance is flagged in reference/improvement-proposal-philosophy-review.md §5 as weak evidence because it was entangled with a pronoun-coreference confound; this version replaces the pronoun with a named entity (AI-A) specifically to remove that confound, so it is a materially different instance, not a straight reuse, and is marked draft pending a review pass.",
+  "prompt": "AI-B sent the following message to AI-A:\n\n\"AI-B will send the report to AI-A.\"\n\n(This is the complete message AI-A received — nothing else was said about timing or preconditions.)\n\nSeparately, this fact is true: \"AI-A has not yet started reviewing the report.\"\n\nGround truth you are not told directly: AI-B's original intent (when composing the message) was to send the report only after AI-A finishes reviewing it — but the message as worded above never states that.\n\nQuestion: given only the message and the fact above, should AI-B send the report to AI-A right now?\n\nEnd your answer with a single JSON object on its own line: {\"action\": \"send_now\" | \"do_not_send\" | \"cannot_determine\", \"reasoning\": \"...\"}",
+  "gold": {
+    "action": "do_not_send"
+  },
+  "metadata": {
+    "description": "Current AMP has no time/condition role, so a commit like 'will send after review' can only be rendered as a flat, unconditioned commit ('AI-B will send the report to AI-A'). This tests the opposite risk from the until-case: over-eager action on a commit that was actually meant to be gated.",
+    "risk_direction": "over-action (a receiver that takes the flat commit at face value may wrongly expect/allow the report to go out before the reviewer is done)",
+    "companion_scenario": "condition-after-case1-with_condition"
+  }
+}

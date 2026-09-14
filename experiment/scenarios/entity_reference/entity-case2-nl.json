@@ -1,0 +1,19 @@
+{
+  "id": "entity-case2-nl",
+  "experiment": "entity_reference",
+  "case_id": "entity-case2",
+  "condition": "nl",
+  "prompt_version": "v1",
+  "gold_status": "draft_pending_review",
+  "gold_source": "Authored by Claude (this session) as a structural replica of entity-case1 with new surface content, to begin building n>1 for the recency-vs-verb-semantics competition pattern. Not yet independently reviewed or piloted — treat any score against it as illustrative, not a finding, until reviewed (see reference/experiment-plan-symmetric.md §1).",
+  "prompt": "You will read a short workplace conversation between two colleagues, then answer one question about the final message. Do not explain your uncertainty away — if more than one file genuinely fits, say so.\n\nTurn 1 — Colleague: \"Can you get invoice-march.pdf ready to send to Priya?\"\nTurn 2 — You: \"Sure.\"\nTurn 3 — Colleague: \"Also, take a look at invoice-march-revised.pdf.\"\nTurn 4 — You: \"OK.\"\nTurn 5 — Colleague: \"And invoice-march-final.pdf needs attention too.\"\nTurn 6 — You: \"Noted.\"\nTurn 7 — Colleague: \"Go ahead and send it to Priya.\"\n\nQuestion: which file (by exact filename) does Turn 7 instruct you to send, and to whom? If you genuinely cannot tell, say so explicitly instead of guessing.\n\nEnd your answer with a single JSON object on its own line: {\"entity\": \"<filename or 'cannot_determine'>\", \"recipient\": \"<name or 'cannot_determine'>\", \"confidence\": \"<low|medium|high>\"}",
+  "gold": {
+    "entity": "invoice-march.pdf",
+    "recipient": "priya"
+  },
+  "metadata": {
+    "description": "Structural replica of entity-case1 (invoice domain instead of report domain). Recency (invoice-march-final.pdf) competes against verb-semantic binding (invoice-march.pdf, the only file tied to 'send' in Turn 1).",
+    "competition_type": "recency_vs_verb_semantics",
+    "distractors": ["invoice-march-revised.pdf", "invoice-march-final.pdf"]
+  }
+}

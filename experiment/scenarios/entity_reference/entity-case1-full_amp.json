@@ -1,0 +1,20 @@
+{
+  "id": "entity-case1-full_amp",
+  "experiment": "entity_reference",
+  "case_id": "entity-case1",
+  "condition": "full_amp",
+  "prompt_version": "v1",
+  "gold_status": "reused_validated",
+  "gold_source": "reference/experiment-h-full-vs-minimal-vs-nl.md, Round 2 (S4).",
+  "prompt": "You will read a short workplace conversation, then a final instruction given as a structured AMP message instead of a plain sentence. You are not being asked to interpret the JSON schema from scratch beyond what is self-evident from its field names — read it as you would any structured record.\n\nTurn 1 — Colleague: \"Can you get report-final.pdf ready to send to Alex?\"\nTurn 2 — You: \"Sure.\"\nTurn 3 — Colleague: \"Also, take a look at report-final-v2.pdf.\"\nTurn 4 — You: \"OK.\"\nTurn 5 — Colleague: \"And report-final-reviewed.pdf needs attention too.\"\nTurn 6 — You: \"Noted.\"\nTurn 7 — Colleague sends:\n{\n  \"protocol\": \"amp/0.1\", \"id\": \"m-101\", \"conversation\": \"conv-entity-case1\",\n  \"sender\": \"entity:colleague\", \"receiver\": [\"entity:you\"],\n  \"timestamp\": \"2026-09-14T09:00:00Z\", \"act\": \"request\",\n  \"content\": {\n    \"predicate\": { \"lemma\": \"send\", \"tense\": \"present\" },\n    \"roles\": {\n      \"agent\": { \"refs\": [\"entity:you\"] },\n      \"patient\": { \"refs\": [\"entity:report-final.pdf\"] },\n      \"recipient\": { \"refs\": [\"entity:alex\"] }\n    }\n  }\n}\n\nQuestion: which file (by exact filename) does this message instruct you to send, and to whom?\n\nEnd your answer with a single JSON object on its own line: {\"entity\": \"<filename or 'cannot_determine'>\", \"recipient\": \"<name or 'cannot_determine'>\", \"confidence\": \"<low|medium|high>\"}",
+  "gold": {
+    "entity": "report-final.pdf",
+    "recipient": "alex"
+  },
+  "metadata": {
+    "description": "Same underlying situation as entity-case1-nl, but the final turn is rendered as a full AMP request message with roles/refs fully populated. The competing distractor filenames only exist in the preceding NL context, exactly as in entity-case1-nl.",
+    "competition_type": "recency_vs_verb_semantics",
+    "distractors": ["report-final-v2.pdf", "report-final-reviewed.pdf"],
+    "expected_result": "Trivial correct read-off of refs — this condition establishes the ceiling, not a hard inference task."
+  }
+}

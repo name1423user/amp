@@ -1,0 +1,19 @@
+{
+  "id": "time-case1-message_time_only",
+  "experiment": "time_role",
+  "case_id": "time-case1",
+  "condition": "message_time_only",
+  "prompt_version": "v1",
+  "gold_status": "draft_pending_review",
+  "gold_source": "Companion to time-case1-with_explicit_event_time. Not yet piloted.",
+  "prompt": "AI-B sends AI-A the following AMP message. Current AMP's `predicate` has no field for when the described event happened, only `tense` (past/present) — it cannot attach a specific clock time to the event itself, only to when the message was sent (the envelope's `timestamp`).\n\n{\n  \"protocol\": \"amp/0.1\", \"id\": \"m-501\", \"conversation\": \"conv-time-case1\",\n  \"sender\": \"entity:agent.b\", \"receiver\": [\"entity:agent.a\"],\n  \"timestamp\": \"2026-09-14T15:00:00Z\", \"act\": \"inform\",\n  \"content\": {\n    \"predicate\": { \"lemma\": \"upload\", \"tense\": \"past\", \"polarity\": \"affirmative\" },\n    \"roles\": {\n      \"agent\": { \"refs\": [\"entity:agent.b\"] },\n      \"patient\": { \"refs\": [\"entity:report\"] }\n    }\n  }\n}\n\n(Rendered to English, this reads: \"AI-B uploaded the report.\" — no clock time for the upload itself is present anywhere in the message; the only timestamp anywhere in the message is the envelope's `timestamp`, which records when this message was sent, not when the report was uploaded.)\n\nQuestion: at what time was the report uploaded?\n\nEnd your answer with a single JSON object on its own line: {\"event_time\": \"<HH:MM or 'unknown'>\", \"reasoning\": \"...\"}",
+  "gold": {
+    "event_time": "unknown",
+    "message_time": "15:00"
+  },
+  "metadata": {
+    "description": "The upload's actual time is never stated anywhere in the message — only the envelope's send timestamp (15:00) exists. The correct answer is 'unknown'/'not stated'. A receiver that instead answers '15:00' has conflated the message's send time with the event's time, exactly the failure mode this scorer flags via `conflated_with_message_time`.",
+    "expected_failure_mode": "Answering 15:00 (the envelope timestamp) as if it were the event time.",
+    "companion_scenario": "time-case1-with_explicit_event_time"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "id": "condition-if-case1-with_condition",
+  "experiment": "condition",
+  "case_id": "condition-if-case1",
+  "condition": "with_condition_field",
+  "prompt_version": "v1",
+  "gold_status": "draft_pending_review",
+  "gold_source": "Authored by Claude (this session), companion to condition-if-case1-without_condition. Exploratory, unvalidated.",
+  "prompt": "AI-B sent the following message to AI-A:\n\n\"AI-B will send the report to AI-A if AI-A approves it.\"\n\nSeparately, this fact is true: \"AI-A said the report looks fine and no changes are needed.\" AI-A has not used the word 'approve' or said anything else about the report.\n\nQuestion: given the message and the fact above, should AI-B send the report to AI-A right now?\n\nEnd your answer with a single JSON object on its own line: {\"action\": \"send_now\" | \"do_not_send\" | \"cannot_determine\", \"reasoning\": \"...\"}",
+  "gold": {
+    "action": "do_not_send"
+  },
+  "metadata": {
+    "description": "Same situation as condition-if-case1-without_condition, but the 'if...approves' clause is explicit, naming exactly what would satisfy it. Hypothesis: an explicit named trigger makes a receiver less likely to accept a merely-positive-sounding remark as satisfying it.",
+    "known_limitation": "Same caveat as the companion file: whether 'looks fine' should count as approval is a judgment call, not an objective fact independent of interpretation. This scenario should not be treated as validated gold until reviewed.",
+    "companion_scenario": "condition-if-case1-without_condition"
+  }
+}

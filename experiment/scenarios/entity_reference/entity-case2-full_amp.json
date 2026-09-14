@@ -1,0 +1,19 @@
+{
+  "id": "entity-case2-full_amp",
+  "experiment": "entity_reference",
+  "case_id": "entity-case2",
+  "condition": "full_amp",
+  "prompt_version": "v1",
+  "gold_status": "draft_pending_review",
+  "gold_source": "Authored by Claude (this session) as a structural replica of entity-case1 with new surface content. Not yet independently reviewed or piloted.",
+  "prompt": "You will read a short workplace conversation, then a final instruction given as a structured AMP message instead of a plain sentence.\n\nTurn 1 — Colleague: \"Can you get invoice-march.pdf ready to send to Priya?\"\nTurn 2 — You: \"Sure.\"\nTurn 3 — Colleague: \"Also, take a look at invoice-march-revised.pdf.\"\nTurn 4 — You: \"OK.\"\nTurn 5 — Colleague: \"And invoice-march-final.pdf needs attention too.\"\nTurn 6 — You: \"Noted.\"\nTurn 7 — Colleague sends:\n{\n  \"protocol\": \"amp/0.1\", \"id\": \"m-201\", \"conversation\": \"conv-entity-case2\",\n  \"sender\": \"entity:colleague\", \"receiver\": [\"entity:you\"],\n  \"timestamp\": \"2026-09-14T09:00:00Z\", \"act\": \"request\",\n  \"content\": {\n    \"predicate\": { \"lemma\": \"send\", \"tense\": \"present\" },\n    \"roles\": {\n      \"agent\": { \"refs\": [\"entity:you\"] },\n      \"patient\": { \"refs\": [\"entity:invoice-march.pdf\"] },\n      \"recipient\": { \"refs\": [\"entity:priya\"] }\n    }\n  }\n}\n\nQuestion: which file (by exact filename) does this message instruct you to send, and to whom?\n\nEnd your answer with a single JSON object on its own line: {\"entity\": \"<filename or 'cannot_determine'>\", \"recipient\": \"<name or 'cannot_determine'>\", \"confidence\": \"<low|medium|high>\"}",
+  "gold": {
+    "entity": "invoice-march.pdf",
+    "recipient": "priya"
+  },
+  "metadata": {
+    "description": "Structural replica of entity-case1-full_amp (invoice domain).",
+    "competition_type": "recency_vs_verb_semantics",
+    "distractors": ["invoice-march-revised.pdf", "invoice-march-final.pdf"]
+  }
+}

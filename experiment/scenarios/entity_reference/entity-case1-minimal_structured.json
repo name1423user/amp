@@ -1,0 +1,20 @@
+{
+  "id": "entity-case1-minimal_structured",
+  "experiment": "entity_reference",
+  "case_id": "entity-case1",
+  "condition": "minimal_structured",
+  "prompt_version": "v1",
+  "gold_status": "reused_validated",
+  "gold_source": "reference/experiment-h-full-vs-minimal-vs-nl.md, Round 2 (S4) — Minimal AMP arm.",
+  "prompt": "You will read a short workplace conversation, then a final instruction given only as a minimal reference object (no act, no verb) instead of a plain sentence or a full structured message.\n\nTurn 1 — Colleague: \"Can you get report-final.pdf ready to send to Alex?\"\nTurn 2 — You: \"Sure.\"\nTurn 3 — Colleague: \"Also, take a look at report-final-v2.pdf.\"\nTurn 4 — You: \"OK.\"\nTurn 5 — Colleague: \"And report-final-reviewed.pdf needs attention too.\"\nTurn 6 — You: \"Noted.\"\nTurn 7 — Colleague sends only:\n{ \"patient\": \"report-final.pdf\", \"recipient\": \"alex\" }\n\n(There is no verb and no explicit act in Turn 7 — treat it as pointing at the file and person the earlier conversation's pending action concerns.)\n\nQuestion: which file (by exact filename) is Turn 7 about, and who is the recipient?\n\nEnd your answer with a single JSON object on its own line: {\"entity\": \"<filename or 'cannot_determine'>\", \"recipient\": \"<name or 'cannot_determine'>\", \"confidence\": \"<low|medium|high>\"}",
+  "gold": {
+    "entity": "report-final.pdf",
+    "recipient": "alex"
+  },
+  "metadata": {
+    "description": "Deliberately the entity-only structured-object form used in experiment-h's own Minimal AMP arm ({\"patient\": ..., \"recipient\": ...} as a standalone object), NOT the alternative 'natural sentence with bracketed entity IDs spliced in' form mentioned in the same document's postscript. The two are different designs with different residual ambiguity (see reference/experiment-plan-symmetric.md §1, note on MAMP-shape ambiguity) and must not be conflated when reading results across cases.",
+    "competition_type": "recency_vs_verb_semantics",
+    "distractors": ["report-final-v2.pdf", "report-final-reviewed.pdf"],
+    "known_limitation": "This condition cannot test whether the *act* (e.g. send vs. discard vs. archive) is conveyed, only whether the referent is. Per experiment-h's own stated limitation, that axis is untested here and by this scenario design cannot be untested-no-longer just by adding more entity-reference cases — see the urgency/condition/act-conveyance follow-up noted in the plan document."
+  }
+}
